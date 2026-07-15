@@ -1,0 +1,47 @@
+version: 0.2
+
+env:
+  variables:
+    AWS_DEFAULT_REGION: us-east-1
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO_NAME
+      - echo Repository URI is $REPOSITORY_URI
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Building the Docker image...
+      - docker build -t $REPOSITORY_URI:latest .
+      - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$CODEBUILD_RESOLVED_SOURCE_VERSION
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Pushing the Docker image...
+      - docker push $REPOSITORY_URI:latest
+      - docker push $REPOSITORY_URI:$CODEBUILD_RESOLVED_SOURCE_VERSION
+      - echo Getting current task definition...
+      - aws ecs describe-task-definition --task-definition $TASK_DEF_FAMILY --query taskDefinition > taskdef.json
+      - echo Updating image in task definition...
+      - python3 -c "import json; td=json.load(open('taskdef.json')); td['containerDefinitions'][0]['image']='$REPOSITORY_URI:latest'; json.dump(td, open('taskdef.json','w'), indent=2)"
+      - echo Creating AppSpec...
+      - |
+        cat <<EOF > appspec.yaml
+        version: 0.0
+        Resources:
+          - TargetService:
+              Type: AWS::ECS::Service
+              Properties:
+                TaskDefinition: $TASK_DEF_FAMILY
+                LoadBalancerInfo:
+                  ContainerName: "app"
+                  ContainerPort: 80
+        EOF
+      - echo AppSpec and TaskDef created
+artifacts:
+  files:
+    - appspec.yaml
+    - taskdef.json
