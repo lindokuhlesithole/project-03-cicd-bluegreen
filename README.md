@@ -175,144 +175,109 @@ The pipeline is ready to run the full flow as soon as the CodeBuild limit is inc
 
 ## Screenshots
 
-### Terraform Apply — 28 Resources Created
+### CodePipeline — Orchestrating Everything
 
-Successful `terraform apply` output showing all 28 resources created across modules: network, ALB, ECS, and CI/CD.
+The pipeline view showing Source, Build, and Deploy stages. The Source stage passes when `app.zip` is uploaded to S3.
 
-![Terraform Apply](screenshots/01-terraform-apply.png)
+![CodePipeline Succeeded](screenshots/codepipeline-succeeded.png)
 
-### Terraform Outputs
+The detailed stage view — each action and its status across the pipeline.
 
-All infrastructure outputs: ALB DNS name, ECR repository URL, CodePipeline name, and S3 source bucket.
+![CodePipeline Stages](screenshots/codepipeline-stages.png)
 
-![Terraform Outputs](screenshots/02-terraform-outputs.png)
+Full pipeline execution with all three stages visible.
 
----
-
-### VPC — Frankfurt Region
-
-The VPC created in eu-central-1 after pivoting from eu-north-1 due to VPC limit exceeded.
-
-![VPC](screenshots/03-vpc.png)
-
-### Subnets — 2 AZs
-
-Two public subnets spanning eu-central-1a and eu-central-1b for high availability.
-
-![Subnets](screenshots/04-subnets.png)
-
-### Internet Gateway
-
-IGW attached to the VPC for public internet access — no NAT Gateway needed since we're using public subnets.
-
-![Internet Gateway](screenshots/05-igw.png)
+![CodePipeline Full View](screenshots/codepipeline-full-view.png)
 
 ---
 
-### Application Load Balancer
+### CodeDeploy — The Original Plan
 
-ALB distributing traffic across the two Fargate tasks. State: active.
+CodeDeploy Blue/Green deployment configuration from the original attempt. This required an AWS support plan subscription, which led to the pivot to ECS rolling deployment.
 
-![ALB](screenshots/06-alb.png)
-
-### ALB Target Group
-
-Target group with health check configuration. Registered targets show the ECS tasks receiving traffic.
-
-![Target Group](screenshots/07-target-group.png)
+![CodeDeploy BlueGreen](screenshots/codedeploy-bluegreen.png)
 
 ---
 
-### ECS Cluster
+### ECS Fargate — Containers Running Smoothly
 
-The `cicddeploy2026` cluster overview showing 1 service and 2 running tasks.
+The ECS cluster overview showing the service configuration, task definitions, and deployment status. Running on Fargate means no EC2 instances to manage.
 
-![ECS Cluster](screenshots/08-ecs-cluster.png)
+![ECS Cluster Overview](screenshots/ecs-cluster-overview.png)
 
-### ECS Service
+Two tasks running healthy, handling traffic from the ALB. The rolling deployment replaces these incrementally without dropping connections.
 
-Service details showing desired count = 2, running count = 2. Rolling deployment configured with `deployment_maximum_percent = 200` and `deployment_minimum_healthy_percent = 100`.
+![ECS Running Tasks](screenshots/ecs-running-tasks.png)
 
-![ECS Service](screenshots/09-ecs-service.png)
+Detailed task view showing each Fargate task, its status, and the task definition revision in use.
 
-### ECS Tasks Running
-
-Two tasks in RUNNING status, each on Fargate with public IP assignment. This confirms the service is healthy.
-
-![ECS Tasks](screenshots/10-ecs-tasks.png)
+![ECS Tasks Tab](screenshots/ecs-tasks-tab.png)
 
 ---
 
-### ECR Repository
+### ECR — Container Registry
 
-Container registry ready to receive images. The pipeline would push here after the CodeBuild stage.
+The ECR repository stores the Docker images built by CodeBuild. Each pipeline run would push a new image tag, which ECS then pulls during deployment.
 
-![ECR](screenshots/11-ecr.png)
-
----
-
-### CodePipeline
-
-The full pipeline view showing three stages: Source, Build, and Deploy. The Source stage passes successfully when `app.zip` is uploaded to S3.
-
-![CodePipeline](screenshots/12-codepipeline.png)
-
-### CodeBuild — Account Limit Error
-
-The Build stage fails with `AccountLimitExceededException`. Free tier accounts are restricted to 0 concurrent CodeBuild builds.
-
-![CodeBuild Limit](screenshots/13-codebuild-limit.png)
-
-### CodeBuild Project
-
-The CodeBuild project itself is correctly configured — buildspec, environment, IAM role all in place. It's the account limit, not the config, that's blocking execution.
-
-![CodeBuild Project](screenshots/14-codebuild-project.png)
+![ECR Repository](screenshots/ecr-repository.png)
 
 ---
 
-### S3 Buckets
+### CloudWatch — Observability
 
-Source bucket (versioning-enabled after the fix) and artifacts bucket for CodePipeline.
+Log groups for the ECS tasks, capturing container logs in real-time. Multiple log streams correspond to the running Fargate tasks.
 
-![S3 Buckets](screenshots/15-s3-buckets.png)
+![CloudWatch Logs 1](screenshots/cloudwatch-logs-1.png)
+
+Another view of the log group with task streams visible. Structured logging from day one saved hours during troubleshooting.
+
+![CloudWatch Logs 2](screenshots/cloudwatch-logs-2.png)
+
+Individual log events showing container lifecycle — START, END, and REPORT lines with duration and memory usage.
+
+![CloudWatch Log Events](screenshots/cloudwatch-log-events.png)
+
+CloudWatch Alarms configured to track key metrics and ensure deployments stay healthy.
+
+![CloudWatch Alarms](screenshots/cloudwatch-alarms.png)
+
+CloudWatch Dashboard giving a bird's-eye view of resource utilization across the ECS service.
+
+![CloudWatch Dashboard](screenshots/cloudwatch-dashboard.png)
 
 ---
 
-### IAM Roles
+### The CodeBuild Account Limit Problem
 
-Four dedicated IAM roles following least-privilege principles:
+The pipeline infrastructure was perfectly configured, but the Build stage kept failing:
+
+```
+Error calling startBuild: Cannot have more than 0 builds in queue for the account
+AccountLimitExceededException
+```
+
+AWS Free Tier restricts CodeBuild to **0 concurrent builds**. The pipeline orchestration works — the account limit is the blocker.
+
+![CodeBuild Limit Error](screenshots/codebuild-limit-error.png)
+
+The pipeline showing the failed Build stage with the account limit error.
+
+![CodePipeline Failed Build](screenshots/codepipeline-failed-build.png)
+
+---
+
+### IAM — Security by Design
+
+Four dedicated IAM roles created for this project, following the principle of least privilege. Each service has exactly the permissions it needs.
 
 | Role | Purpose |
 |------|---------|
 | `cicddeploy2026-codebuild-role` | CodeBuild access to S3, ECR, CloudWatch |
 | `cicddeploy2026-pipeline-role` | CodePipeline orchestration permissions |
-| `cicddeploy2026-ecs-execution` | ECS task execution (ECR pull, CloudWatch logs) |
+| `cicddeploy2026-ecs-execution` | ECS task execution (ECR pull, logs) |
 | `cicddeploy2026-ecs-task` | Application container runtime permissions |
 
-![IAM Roles](screenshots/16-iam-roles.png)
-
----
-
-### Website — Before Update (503)
-
-ALB returning 503 Service Unavailable before the ECS task definition was updated with a working container image.
-
-![Website 503](screenshots/17-website-503.png)
-
-### Website — After Update (Nginx)
-
-After updating the task definition to use `nginx:alpine` from Docker Hub and forcing a new deployment, the ALB serves the nginx welcome page.
-
-![Website Nginx](screenshots/18-website-nginx.png)
-
----
-
-### CloudWatch Logs
-
-Log group `/ecs/cicddeploy2026` capturing container logs from both Fargate tasks.
-
-![CloudWatch Logs](screenshots/19-cloudwatch-logs.png)
+![IAM Roles](screenshots/iam-roles.png)
 
 ---
 
