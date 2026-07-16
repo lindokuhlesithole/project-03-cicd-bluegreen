@@ -93,40 +93,8 @@ The pipeline is ready to run the full flow as soon as the CodeBuild limit is inc
 ## Architecture
 
 ```
-                         ┌─────────────────────────────────────────────┐
-                         │              AWS Cloud (eu-central-1)        │
-                         │                                             │
-    ┌──────────┐         │    ┌──────────────┐    ┌───────────┐       │
-    │  Developer│─────────│───▶│     S3       │───▶│CodePipeline│      │
-    │ (uploads  │         │    │Source Bucket │    │(Orchestrate)│     │
-    │  app.zip) │         │    └──────────────┘    └─────┬─────┘      │
-    └──────────┘         │                              │            │
-                         │                         ┌─────▼─────┐      │
-                         │                         │ CodeBuild │      │
-                         │    (Account limit = 0)  │  (Build)  │      │
-                         │                         └─────┬─────┘      │
-                         │                               │            │
-                         │    ┌──────────┐         ┌─────▼─────┐      │
-                         │    │   ECR    │◀────────│Push Image │      │
-                         │    │Registry  │         └───────────┘      │
-                         │    └────┬─────┘                            │
-                         │         │                                  │
-                         │    ┌────▼─────┐    ┌─────────────┐         │
-                         │    │   ECS    │    │ CloudWatch  │         │
-                         │    │ Fargate  │───▶│Logs/Alarms  │         │
-                         │    │(2 tasks) │    └─────────────┘         │
-                         │    └────┬─────┘                            │
-                         │         │                                  │
-                         │    ┌────▼─────┐                            │
-                         │    │    ALB   │                            │
-                         │    │ (Port 80)│                            │
-                         │    └────┬─────┘                            │
-                         │         │                                  │
-                         │    ┌────▼─────┐                            │
-                         │    │  User    │                            │
-                         │    │ (Browser)│                            │
-                         │    └──────────┘                            │
-                         └─────────────────────────────────────────────┘
+<img width="1057" height="821" alt="image" src="https://github.com/user-attachments/assets/64ac01c9-b05c-4304-a0f3-893a824165e2" />
+
 ```
 
 **Pipeline Stages:**
