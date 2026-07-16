@@ -340,7 +340,7 @@ http://cicddeploy2026-2005894892.eu-central-1.elb.amazonaws.com
 | **Running Tasks** | 2 Fargate tasks |
 | **IAM Roles** | 4 (pipeline, codebuild, ecs-task, ecs-execution) |
 | **Terraform Resources** | 28 |
-| **IaC** | Terraform |
+| **IaC** | Terraform |## Author
 
 **Lindokuhle Sithole** - *Cloud Engineer | Cloud DevOps Engineer | Cloud Security Specialist*
 
