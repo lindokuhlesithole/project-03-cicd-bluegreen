@@ -342,6 +342,10 @@ http://cicddeploy2026-2005894892.eu-central-1.elb.amazonaws.com
 | **Terraform Resources** | 28 |
 | **IaC** | Terraform |
 
----
+**Lindokuhle Sithole** - *Cloud Engineer | Cloud DevOps Engineer | Cloud Security Specialist*
 
-**Built by [Lindokuhle Sithole](https://github.com/lindokuhlesithole)** — Cloud Engineer learning by building. Based in Bremen, Germany.
+Based in Bremen, Germany. BSc Mathematical Science from the University of the Witwatersrand. 5x AWS Certified (Solutions Architect Professional, Security Specialty, CloudOps Engineer Associate, Solutions Architect Associate, Cloud Practitioner) plus CompTIA Security+.
+
+- **LinkedIn:** [linkedin.com/in/lindokuhle-sithole-bb701b19a](https://www.linkedin.com/in/lindokuhle-sithole-bb701b19a)
+- **GitHub:** [github.com/lindokuhlesithole](https://github.com/lindokuhlesithole)
+- **Email:** sitholelindokuhle371@gmail.com
