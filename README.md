@@ -92,10 +92,9 @@ The pipeline is ready to run the full flow as soon as the CodeBuild limit is inc
 
 ## Architecture
 
-```
-<img width="1057" height="821" alt="image" src="https://github.com/user-attachments/assets/64ac01c9-b05c-4304-a0f3-893a824165e2" />
+<img width="1057" height="821" alt="Screenshot 2026-07-16 234305" src="https://github.com/user-attachments/assets/db0d4af3-6849-4d96-8d42-1b60868de333" />
 
-```
+
 
 **Pipeline Stages:**
 
